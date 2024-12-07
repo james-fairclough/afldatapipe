@@ -5,6 +5,8 @@ import pandas_gbq # type: ignore
 from google.cloud import bigquery as bq
 from google.cloud import secretmanager as sm
 from time import sleep
+from flask import Flask
+import os
 
 def getDatasets():
   client = bq.Client(project = 'aflanalyticsproject')
@@ -88,8 +90,15 @@ def updateTeams():
    df = getTeams(secret)
    updateTable('Teams',df)
 
-secret = getSecret()
-players = getPlayers(secret)
-replaceTable('Players',players)
-print(players)
-print("Done")
+
+
+
+app = Flask(__name__)
+
+@app.route("/")
+def run():
+  secret = getSecret()
+  players = getPlayers(secret)  
+  replaceTable('Players',players)
+  print(players)
+  print("Done")
