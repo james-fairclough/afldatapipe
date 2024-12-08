@@ -97,12 +97,11 @@ app = Flask(__name__)
 
 @app.route("/")
 def run():
-  #secret = getSecret()
-  #players = getPlayers(secret)  
-  #replaceTable('Players',players)
-  #print(players)
-  #return "Task completed successfully!", 200
-  return "Hello World!", 200
+  secret = getSecret()
+  players = getPlayers(secret)  
+  replaceTable('Players',players)
+  print(players)
+  return "Task completed successfully!", 200
 
 
 if __name__ == "__main__":
