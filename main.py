@@ -64,7 +64,7 @@ def getPlayers(secret):
     r = r['response']
     df = pd.DataFrame(r)
     df['teamID'] = t
-    output = pd.concat(output,df)
+    output = pd.concat([output,df])
     print(t)
     sleep(10)
 
