@@ -52,7 +52,7 @@ def getPlayers(secret):
   output = pd.DataFrame(columns = ['id','name','teamID'])
 
   teams = getTeams(secret)
-
+  print(teams)
   for t in teams['id']:
   #for t in range(1,3):
     urlTeam = str(t)
@@ -104,5 +104,5 @@ def run():
   return "Task completed successfully!", 200
 
 
-if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+#if __name__ == "__main__":
+    #app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
