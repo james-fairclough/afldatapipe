@@ -7,6 +7,7 @@ from google.cloud import secretmanager as sm
 from time import sleep
 from flask import Flask
 import os
+import threading 
 
 def getDatasets():
   client = bq.Client(project = 'aflanalyticsproject')
@@ -52,7 +53,6 @@ def getPlayers(secret):
   output = pd.DataFrame(columns = ['id','name','teamID'])
 
   teams = getTeams(secret)
-  print(teams)
   for t in teams['id']:
   #for t in range(1,3):
     urlTeam = str(t)
@@ -65,7 +65,7 @@ def getPlayers(secret):
     df = pd.DataFrame(r)
     df['teamID'] = t
     output = pd.concat([output,df])
-    print(t)
+    #print(t)
     sleep(10)
 
   return output  
@@ -95,14 +95,36 @@ def updateTeams():
 
 app = Flask(__name__)
 
-@app.route("/")
-def run():
+@app.route("/players")
+def updatePlayers():
   secret = getSecret()
   players = getPlayers(secret)  
   replaceTable('Players',players)
-  print(players)
-  return "Task completed successfully!", 200
+  return "Players updated successfully!", 200
 
+@app.route("/all")
+def updateAll():
+  secret = getSecret()
+   # Create thread instances
+  thread1 = threading.Thread(target=updatePlayers)
+  thread2 = threading.Thread(target=updateTeams)
+
+  # Start threads
+  thread1.start()
+  thread2.start()
+
+  # Wait for both threads to complete
+  thread1.join()
+  thread2.join()
+  return "All tables updated successfully!", 200
+  
+  
+@app.route("/teams")
+def updateTeams():
+  secret = getSecret()
+  teams = getTeams(secret)  
+  replaceTable('Teams',teams)
+  return "Players updated successfully!", 200   
 
 #if __name__ == "__main__":
     #app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
