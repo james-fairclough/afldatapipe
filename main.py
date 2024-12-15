@@ -192,7 +192,7 @@ def updateTeams():
 def updatePlayerStats():
   secret = getSecret()
   playerStatistics = getPlayerStats(secret)  
-  updateTable('PlayerStatistics',playerStatistics)
+  replaceTable('PlayerStatistics',playerStatistics)
   return "Player's stats updated successfully!", 200   
 
 
