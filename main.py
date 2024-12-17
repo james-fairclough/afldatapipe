@@ -67,10 +67,10 @@ def getPlayerStats(secret):
     url = "https://v1.afl.api-sports.io/players/statistics?season=2024&id=" + urlPlayer
     payload={}
     
-    r = requests.request("GET", url, headers=headers, data=payload)
+    #r = requests.request("GET", url, headers=headers, data=payload)
+    r = make_request_with_retries(url, headers, payload)
     r = json.loads(r.text)
     r = r['response'][0]
-    print(r)
     flat_data = {
         'player_id': r['player']['id'],
         'games_played': r['statistics']['games']['played'],
@@ -126,6 +126,22 @@ def getPlayers(secret):
 
   #return df
 
+def make_request_with_retries(url, headers, payload):
+    retries = 0
+    while retries < 3:
+        try:
+            r = requests.request("GET", url, headers=headers, data=payload)
+            
+            # Check if the response is valid or empty
+            if r and r.text:  # Ensure the response is not empty
+                return r
+            else:
+                print(f"Attempt {retries + 1}: Empty response. Retrying...")
+        except requests.RequestException as e:
+            print(f"Attempt {retries + 1}: Error occurred: {e}. Retrying...")
+        
+        retries += 1
+        sleep(1)
 
 
 
