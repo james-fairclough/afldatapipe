@@ -322,7 +322,7 @@ def updatePlayerStats():
 def updatePlayerMatchStats():
   secret = getSecret()
   playerMatchStatistics = getMatchStatsPlayers(secret)  
-  print(playerMatchStatistics)
+  playerMatchStatistics = playerMatchStatistics.astype(str)
   createTable('PlayerStatistics',playerMatchStatistics)
   return "Player's match stats returned successfully!", 200   
 
@@ -331,12 +331,7 @@ def updateMatches():
   secret = getSecret()
   matches = getMatches(secret) 
   matches = matches.astype(str) 
-  pd.set_option('display.max_columns', None)  # No limit on number of columns
-  pd.set_option('display.width', None)  # Disable the line wrapping, making it wide enough
-  pd.set_option('display.max_colwidth', None)  # Don't truncate column values
-  print(matches)
-  print(matches.dtypes)
-  createTable('Matches',matches)
+  replaceTable('Matches',matches)
   return "Matches updated sucessfully", 200   
 
 
