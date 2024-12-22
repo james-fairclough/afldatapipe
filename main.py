@@ -323,6 +323,7 @@ def updatePlayerStats():
 def updatePlayerMatchStats():
   secret = getSecret()
   playerMatchStatistics = getMatchStatsPlayers(secret)  
+  print(playerMatchStatistics)
   createTable('PlayerStatistics',playerMatchStatistics)
   return "Player's match stats returned successfully!", 200   
 
@@ -330,6 +331,7 @@ def updatePlayerMatchStats():
 def updateMatches():
   secret = getSecret()
   matches = getMatches(secret)  
+  print(matches)
   createTable('Matches',matches)
   return "Matches updated sucessfully", 200   
 
