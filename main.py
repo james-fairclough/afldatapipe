@@ -126,6 +126,106 @@ def getPlayers(secret):
 
   #return df
 
+def getMatchStatsPlayers(secret):
+  headers = {
+  'x-rapidapi-key': secret,
+  'x-rapidapi-host': 'v1.afl.api-sports.io'
+  }
+
+  output = pd.DataFrame(columns = ['game_id', 'team_id', 'player_id', 'player_number', 'goals_total', 'goals_assists',
+      'behinds', 'disposals', 'kicks', 'handballs', 'marks', 'tackles', 'hitouts',
+      'clearances', 'free_kicks_for', 'free_kicks_against'])
+
+  games = getMatches(secret)
+  for g in games['game_id']:
+    urlMatch = str(g)
+    url = "https://v1.afl.api-sports.io/games/statistics/players?id=" + urlMatch
+    payload={}
+
+    r = make_request_with_retries(url, headers, payload)
+    r = json.loads(r.text)
+    r = r['response']
+    rows = []
+    for game in r:
+        game_id = game['game']['id']
+        for team in game['teams']:
+            team_id = team['team']['id']
+            for player in team['players']:
+                player_data = {
+                    'game_id': game_id,
+                    'team_id': team_id,
+                    'player_id': player['player']['id'],
+                    'player_number': player['player']['number'],
+                    'goals_total': player['goals']['total'],
+                    'goals_assists': player['goals']['assists'],
+                    'behinds': player['behinds'],
+                    'disposals': player['disposals'],
+                    'kicks': player['kicks'],
+                    'handballs': player['handballs'],
+                    'marks': player['marks'],
+                    'tackles': player['tackles'],
+                    'hitouts': player['hitouts'],
+                    'clearances': player['clearances'],
+                    'free_kicks_for': player['free_kicks']['for'],
+                    'free_kicks_against': player['free_kicks']['against']
+                }
+                rows.append(player_data)
+    df = pd.DataFrame(rows)
+
+    output = pd.concat([output,df])
+    
+
+  return output
+
+def getMatches(secret):
+  headers = {
+  'x-rapidapi-key': secret,
+  'x-rapidapi-host': 'v1.afl.api-sports.io'
+  }
+  url = "https://v1.afl.api-sports.io/games?season=2024&league=1"
+  payload={}
+  
+  r = requests.request("GET", url, headers=headers, data=payload)
+  r = json.loads(r.text)
+  r = r['response']
+  output = pd.DataFrame(columns = [
+    "game_id", "season", "date", "round", "week", "venue", "attendance", "status", 
+    "home_team_id", "away_team_id", "home_score", "home_goals", "home_behinds", 
+    "home_psgoals", "home_psbehinds", "away_score", "away_goals", "away_behinds", 
+    "away_psgoals", "away_psbehinds"
+    ])
+
+  for i in r:
+    matchData = {
+      "game_id": i['game']['id'],
+      "season": i['league']['season'],
+      "date": i['date'],
+      "round": i['round'],
+      "week": i['week'],
+      "venue": i['venue'],
+      "attendance": i['attendance'],
+      "status": i['status']['long'],
+      "home_team_id": i['teams']['home']['id'],
+      "away_team_id": i['teams']['away']['id'],
+      "home_score": i['scores']['home']['score'],
+      "home_goals": i['scores']['home']['goals'],
+      "home_behinds": i['scores']['home']['behinds'],
+      "home_psgoals": i['scores']['home']['psgoals'],
+      "home_psbehinds": i['scores']['home']['psbehinds'],
+      "away_score": i['scores']['away']['score'],
+      "away_goals": i['scores']['away']['goals'],
+      "away_behinds": i['scores']['away']['behinds'],
+      "away_psgoals": i['scores']['away']['psgoals'],
+      "away_psbehinds": i['scores']['away']['psbehinds']
+    }
+    
+
+    df = pd.DataFrame([matchData])
+
+    output = pd.concat([output,df])
+
+  return output
+
 def make_request_with_retries(url, headers, payload):
     retries = 0
     while retries < 3:
@@ -186,15 +286,23 @@ def updateAll():
   thread1 = threading.Thread(target=updatePlayers)
   thread2 = threading.Thread(target=updateTeams)
   thread3 = threading.Thread(target=updatePlayerStats)
+  thread4 = threading.Thread(target=updatePlayerMatchStats)
+  thread5 = threading.Thread(target=updateMatches)
+
   # Start threads
   thread1.start()
   thread2.start()
   thread3.start()
+  thread4.start()
+  thread5.start()
 
   # Wait for threads to complete
   thread1.join()
   thread2.join()
   thread3.join()
+  thread4.join()
+  thread5.join()
+
   return "All tables updated successfully!", 200
   
 @app.route("/teams")
@@ -211,6 +319,20 @@ def updatePlayerStats():
   replaceTable('PlayerStatistics',playerStatistics)
   return "Player's stats updated successfully!", 200   
 
+@app.route("/playermatchstats")
+def updatePlayerMatchStats():
+  secret = getSecret()
+  playerMatchStatistics = getMatchStatsPlayers(secret)  
+  replaceTable('PlayerStatistics',playerMatchStatistics)
+  return "Player's match stats returned successfully!", 200   
+
+@app.route("/matches")
+def updateMatches():
+  secret = getSecret()
+  matches = getMatches(secret)  
+  replaceTable('Matches',matches)
+  return "Matches updated sucessfully", 200   
+
 
 #if __name__ == "__main__":
-    #app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
+#    app.run(debug=True, host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
