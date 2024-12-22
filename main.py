@@ -189,7 +189,7 @@ def getMatches(secret):
   r = json.loads(r.text)
   r = r['response']
   output = pd.DataFrame(columns = [
-    "game_id", "season", "date", "round", "week", "venue", "attendance", "status", 
+    "game_id", "season", "date", "round", "week", "venue", "status", 
     "home_team_id", "away_team_id", "home_score", "home_goals", "home_behinds", 
     "home_psgoals", "home_psbehinds", "away_score", "away_goals", "away_behinds", 
     "away_psgoals", "away_psbehinds"
@@ -330,7 +330,10 @@ def updatePlayerMatchStats():
 def updateMatches():
   secret = getSecret()
   matches = getMatches(secret)  
-  print(matches.to_dict())
+  matches.set_option('display.max_columns', None)  # No limit on number of columns
+  matches.set_option('display.width', None)  # Disable the line wrapping, making it wide enough
+  matches.set_option('display.max_colwidth', None)  # Don't truncate column values
+  print(matches)
   print(matches.dtypes)
   createTable('Matches',matches)
   return "Matches updated sucessfully", 200   
