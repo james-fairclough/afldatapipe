@@ -330,9 +330,9 @@ def updatePlayerMatchStats():
 def updateMatches():
   secret = getSecret()
   matches = getMatches(secret)  
-  matches.set_option('display.max_columns', None)  # No limit on number of columns
-  matches.set_option('display.width', None)  # Disable the line wrapping, making it wide enough
-  matches.set_option('display.max_colwidth', None)  # Don't truncate column values
+  pd.set_option('display.max_columns', None)  # No limit on number of columns
+  pd.set_option('display.width', None)  # Disable the line wrapping, making it wide enough
+  pd.set_option('display.max_colwidth', None)  # Don't truncate column values
   print(matches)
   print(matches.dtypes)
   createTable('Matches',matches)
