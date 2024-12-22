@@ -323,7 +323,7 @@ def updatePlayerMatchStats():
   secret = getSecret()
   playerMatchStatistics = getMatchStatsPlayers(secret)  
   playerMatchStatistics = playerMatchStatistics.astype(str)
-  createTable('PlayerMatchStatistics',playerMatchStatistics)
+  replaceTable('PlayerMatchStatistics',playerMatchStatistics)
   return "Player's match stats returned successfully!", 200   
 
 @app.route("/matches")
