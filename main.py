@@ -203,7 +203,6 @@ def getMatches(secret):
       "round": i['round'],
       "week": i['week'],
       "venue": i['venue'],
-      "attendance": i['attendance'],
       "status": i['status']['long'],
       "home_team_id": i['teams']['home']['id'],
       "away_team_id": i['teams']['away']['id'],
@@ -331,7 +330,8 @@ def updatePlayerMatchStats():
 def updateMatches():
   secret = getSecret()
   matches = getMatches(secret)  
-  print(matches)
+  print(matches.to_dict())
+  print(matches.dtypes)
   createTable('Matches',matches)
   return "Matches updated sucessfully", 200   
 
