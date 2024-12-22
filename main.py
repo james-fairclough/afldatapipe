@@ -329,7 +329,8 @@ def updatePlayerMatchStats():
 @app.route("/matches")
 def updateMatches():
   secret = getSecret()
-  matches = getMatches(secret)  
+  matches = getMatches(secret) 
+  matches = matches.astype(str) 
   pd.set_option('display.max_columns', None)  # No limit on number of columns
   pd.set_option('display.width', None)  # Disable the line wrapping, making it wide enough
   pd.set_option('display.max_colwidth', None)  # Don't truncate column values
