@@ -45,7 +45,7 @@ def getTeams(secret):
   url = "https://v1.afl.api-sports.io/teams"
   payload={}
   
-  r = requests.request("GET", url, headers=headers, data=payload)
+  r = make_request_with_retries(url, headers, payload)
   r = json.loads(r.text)
   r = r['response']
   return pd.DataFrame(r)
@@ -111,7 +111,7 @@ def getPlayers(secret):
     url = "https://v1.afl.api-sports.io/players?season=2024&team=" + urlTeam
     payload={}
     
-    r = requests.request("GET", url, headers=headers, data=payload)
+    r = make_request_with_retries(url, headers, payload)
     r = json.loads(r.text)
     r = r['response']
     df = pd.DataFrame(r)
@@ -185,7 +185,7 @@ def getMatches(secret):
   url = "https://v1.afl.api-sports.io/games?season=2024&league=1"
   payload={}
   
-  r = requests.request("GET", url, headers=headers, data=payload)
+  r = make_request_with_retries(url, headers, payload)
   r = json.loads(r.text)
   r = r['response']
   output = pd.DataFrame(columns = [
