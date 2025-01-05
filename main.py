@@ -10,6 +10,9 @@ from flask import Flask
 import os
 import threading 
 from datetime import datetime, timezone
+import pyarrow as pa
+
+season = str(datetime.now().year)
 
 ###################   API Requests   ###################
 
@@ -54,6 +57,7 @@ def getPlayerStats(secret):
     ])
     players = getPlayers(secret)  # Fetch all players
     for p in players['id']:
+        #url = f"https://v1.afl.api-sports.io/players/statistics?season={season}&id={p}"
         url = f"https://v1.afl.api-sports.io/players/statistics?season=2024&id={p}"
         payload = {}
         r = make_request_with_retries(url, headers, payload)  # Request player stats
@@ -90,6 +94,7 @@ def getPlayers(secret):
     output = pd.DataFrame(columns=['id', 'name', 'teamID'])
     teams = getTeams(secret)  # Fetch all teams
     for t in teams['id']:
+        #url = f"https://v1.afl.api-sports.io/players?season={season}&team={t}"
         url = f"https://v1.afl.api-sports.io/players?season=2024&team={t}"
         payload = {}
         r = make_request_with_retries(url, headers, payload)  # API request
@@ -157,12 +162,28 @@ def getMatches(secret):
     payload = {}
     r = make_request_with_retries(url, headers, payload)  # API request
     r = json.loads(r.text)['response']  # Parse response
-    output = pd.DataFrame(columns=[
-        "game_id", "season", "date", "round", "week", "venue", "status",
-        "home_team_id", "away_team_id", "home_score", "home_goals", "home_behinds",
-        "home_psgoals", "home_psbehinds", "away_score", "away_goals", "away_behinds",
-        "away_psgoals", "away_psbehinds"
-    ])
+    output = pd.DataFrame({
+    "game_id": pd.Series(dtype='int64'),
+    "season": pd.Series(dtype='int64'),
+    "date": pd.Series(dtype='int'),
+    "round": pd.Series(dtype='str'),
+    "week": pd.Series(dtype='str'),
+    "venue": pd.Series(dtype='str'),
+    "status": pd.Series(dtype='str'),
+    "home_team_id": pd.Series(dtype='int64'),
+    "away_team_id": pd.Series(dtype='int64'),
+    "home_score": pd.Series(dtype='int64'),
+    "home_goals": pd.Series(dtype='int64'),
+    "home_behinds": pd.Series(dtype='int64'),
+    "home_psgoals": pd.Series(dtype='int64'),
+    "home_psbehinds": pd.Series(dtype='int64'),
+    "away_score": pd.Series(dtype='int64'),
+    "away_goals": pd.Series(dtype='int64'),
+    "away_behinds": pd.Series(dtype='int64'),
+    "away_psgoals": pd.Series(dtype='int64'),
+    "away_psbehinds": pd.Series(dtype='int64'),
+    })
+
     for i in r:
         # Flatten nested JSON structure
         matchData = {
@@ -188,6 +209,13 @@ def getMatches(secret):
         }
         df = pd.DataFrame([matchData])  # Convert match data to DataFrame
         output = pd.concat([output, df])  # Append to output DataFrame
+    
+    #cast all values to correct type
+    output['date'] = pd.to_datetime(output['date'])
+    output['round'] = output['round'].astype(str)
+    output['week'] = output['week'].astype(str)
+    output['venue'] = output['venue'].astype(str)
+    output['status'] = output['status'].astype(str)
     return output
 
 # Helper function to handle API requests with retries
@@ -210,6 +238,7 @@ def make_request_with_retries(url, headers, payload):
 # Replaces a BigQuery table with new data
 def replaceTable(table, df):
     t = 'AFL.' + table  # Define table name
+    df = clean_dataframe(df)
     pandas_gbq.to_gbq(df, t, project_id='aflanalyticsproject', if_exists='replace')  # Replace table
     createLog(table, "Replace")  # Log the action
 
@@ -220,9 +249,9 @@ def updateTable(table, df):
     createLog(table, "Update")
 
 # Creates a new BigQuery table if it doesn't exist
-def createTable(table, df):
+def createTable(table, df, schema):
     t = 'AFL.' + table
-    pandas_gbq.to_gbq(df, t, project_id='aflanalyticsproject', if_exists='fail')
+    pandas_gbq.to_gbq(df, t, project_id='aflanalyticsproject', if_exists='fail', table_schema=schema)
     createLog(table, "Create")
 
 # Logs table actions to a logging table in BigQuery
@@ -231,6 +260,31 @@ def createLog(t, action):
     data = {"table": t, "utctimestamp": current_utc_time, "action": action}  # Create log data
     df = pd.DataFrame([data])  # Convert to DataFrame
     pandas_gbq.to_gbq(df, "AFL.Logs", project_id='aflanalyticsproject', if_exists='append')  # Append log to BigQuery
+
+# Clean DF
+def clean_dataframe(df):
+    # Ensure all int64 columns are numeric, filling invalid values with 0
+    int_columns = df.select_dtypes(include=['int64']).columns
+    for col in int_columns:
+        df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype('int64')
+        print(str(col) + " int")  
+
+    # Ensure datetime columns are parsed correctly
+    datetime_columns = df.select_dtypes(include=['datetime64[ns]']).columns
+    for col in datetime_columns:
+        df[col] = pd.to_datetime(df[col], errors='coerce')
+        print(str(col) + " date")
+
+    # Ensure string columns are consistent and replace NaN with empty strings
+    str_columns = df.select_dtypes(include=['string']).columns
+    for col in str_columns:
+        df[col] = df[col].fillna('').astype('str')
+        print(str(col) + " str")
+
+    #for col, dtype in df.dtypes.items():
+        #print(f"Column: {col}, Data Type: {dtype}")
+
+    return df
 
 ###################   Flask App   ###################
 
@@ -298,7 +352,6 @@ def updatePlayerMatchStats():
 def updateMatches():
     secret = getSecret()
     matches = getMatches(secret)
-    matches = matches.astype(str)  # Convert to string for compatibility
     replaceTable('Matches', matches)
     return "Matches updated successfully", 200
 
